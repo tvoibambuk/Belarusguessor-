@@ -1,42 +1,204 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BelarusGuessor PRO</title>
-  <link rel="stylesheet" href="style.css">
-  <script src="https://api-maps.yandex.ru/2.1/?apikey=3f899af3-528f-4f87-a10b-2e52e388a17b&lang=ru_RU"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BelarusGuessor PRO</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://api-maps.yandex.ru/2.1/?apikey=YOUR_API_KEY&lang=ru_RU" defer></script>
 </head>
 <body>
-  <header>
-    <h1>BelarusGuessor PRO</h1>
-    <p>Угадай место по панораме Беларуси 🇧🇾</p>
-  </header>
+    <div id="app">
+        <!-- Главное меню -->
+        <div id="main-menu" class="screen active">
+            <div class="menu-container">
+                <h1 class="game-title">🇧🇾 BelarusGuessor PRO</h1>
+                <p class="game-subtitle">Угадай локацию в Беларуси!</p>
+                
+                <div class="menu-buttons">
+                    <button class="menu-btn solo-btn" onclick="startSoloGame()">
+                        🎯 Одиночная игра
+                    </button>
+                    <button class="menu-btn multiplayer-btn" onclick="showMultiplayer()">
+                        👥 Мультиплеер
+                    </button>
+                    <button class="menu-btn settings-btn" onclick="showSettings()">
+                        ⚙️ Настройки
+                    </button>
+                </div>
+                
+                <div class="game-stats">
+                    <div class="stat">
+                        <span class="stat-label">Лучший результат:</span>
+                        <span class="stat-value" id="best-score">0</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Игр сыграно:</span>
+                        <span class="stat-value" id="games-played">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-  <nav id="menu">
-    <button id="soloBtn">Соло</button>
-    <button id="multiBtn">Мультиплеер</button>
-  </nav>
+        <!-- Экран мультиплеера -->
+        <div id="multiplayer-menu" class="screen">
+            <div class="menu-container">
+                <h2>🌐 Мультиплеер</h2>
+                <p>Подключение к серверу...</p>
+                
+                <div class="multiplayer-options">
+                    <button class="menu-btn" onclick="createRoom()">Создать комнату</button>
+                    <button class="menu-btn" onclick="joinRoom()">Присоединиться</button>
+                </div>
+                
+                <div id="room-info" class="room-info hidden">
+                    <p>Код комнаты: <span id="room-code">XXXX</span></p>
+                    <div id="players-list"></div>
+                </div>
+                
+                <button class="back-btn" onclick="showMainMenu()">↩ Назад</button>
+            </div>
+        </div>
 
-  <main id="gameContainer">
-    <div class="game-panel">
-      <div id="panorama"></div>
-      <div id="map"></div>
+        <!-- Игровой экран -->
+        <div id="game-screen" class="screen">
+            <!-- Заголовок игры -->
+            <div class="game-header">
+                <div class="game-info">
+                    <span class="round-info">Раунд <span id="current-round">1</span>/5</span>
+                    <span class="score-info">Очки: <span id="current-score">0</span></span>
+                </div>
+                <button class="menu-toggle" onclick="showMainMenu()">☰ Меню</button>
+            </div>
+
+            <!-- Основной игровой контент -->
+            <div class="game-content">
+                <!-- Панорама -->
+                <div class="panorama-container">
+                    <div id="panorama" class="panorama"></div>
+                    <div class="panorama-overlay">
+                        <div class="location-hint" id="location-hint">🇧🇾 Где это в Беларуси?</div>
+                    </div>
+                </div>
+
+                <!-- Карта для выбора -->
+                <div class="map-container">
+                    <div id="guess-map" class="guess-map"></div>
+                    <div class="map-overlay">
+                        <div class="map-title">Выберите локацию на карте</div>
+                        <div class="map-controls">
+                            <button id="make-guess-btn" class="action-btn primary" disabled onclick="makeGuess()">
+                                📍 Сделать выбор
+                            </button>
+                            <button id="skip-round-btn" class="action-btn secondary" onclick="skipRound()">
+                                ⏭️ Пропустить
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Мобильные кнопки -->
+            <div class="mobile-controls">
+                <button id="mobile-guess-btn" class="mobile-btn primary" disabled onclick="makeGuess()">
+                    📍 Сделать выбор
+                </button>
+            </div>
+
+            <!-- Прогресс раундов -->
+            <div class="round-progress">
+                <div class="round-dots">
+                    <span class="round-dot active" data-round="1"></span>
+                    <span class="round-dot" data-round="2"></span>
+                    <span class="round-dot" data-round="3"></span>
+                    <span class="round-dot" data-round="4"></span>
+                    <span class="round-dot" data-round="5"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Модальное окно результата раунда -->
+        <div id="round-result-modal" class="modal">
+            <div class="modal-content">
+                <div class="result-header">
+                    <h3 id="result-title">Результат раунда</h3>
+                    <div id="result-emoji" class="result-emoji">🎯</div>
+                </div>
+                
+                <div class="result-stats">
+                    <div class="result-stat">
+                        <span class="stat-label">Расстояние:</span>
+                        <span id="result-distance" class="stat-value">0 км</span>
+                    </div>
+                    <div class="result-stat">
+                        <span class="stat-label">Очки за раунд:</span>
+                        <span id="result-points" class="stat-value">0</span>
+                    </div>
+                    <div class="result-stat">
+                        <span class="stat-label">Общий счёт:</span>
+                        <span id="result-total" class="stat-value">0</span>
+                    </div>
+                </div>
+
+                <div class="result-location">
+                    <p>Правильное место: <span id="correct-location"></span></p>
+                </div>
+                
+                <div class="result-actions">
+                    <button id="next-round-btn" class="action-btn primary" onclick="nextRound()">
+                        ➡️ Следующий раунд
+                    </button>
+                    <button class="action-btn secondary" onclick="showResultsOnMap()">
+                        🗺️ Показать на карте
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Модальное окно финальных результатов -->
+        <div id="final-result-modal" class="modal">
+            <div class="modal-content">
+                <div class="final-header">
+                    <h2>🏆 Игра завершена!</h2>
+                    <div id="final-emoji" class="final-emoji">🎉</div>
+                </div>
+                
+                <div class="final-stats">
+                    <div class="final-score">
+                        <span class="final-score-label">Итоговый счёт:</span>
+                        <span id="final-score-value" class="final-score-value">0</span>
+                    </div>
+                    
+                    <div class="round-breakdown">
+                        <h4>Результаты по раундам:</h4>
+                        <div id="rounds-breakdown"></div>
+                    </div>
+                </div>
+                
+                <div class="final-actions">
+                    <button class="action-btn primary" onclick="startSoloGame()">
+                        🎮 Играть снова
+                    </button>
+                    <button class="action-btn secondary" onclick="shareResults()">
+                        📤 Поделиться
+                    </button>
+                    <button class="action-btn secondary" onclick="showMainMenu()">
+                        🏠 Главное меню
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Лоадер -->
+        <div id="loader" class="loader hidden">
+            <div class="loader-content">
+                <div class="spinner"></div>
+                <p>Загрузка панорамы...</p>
+            </div>
+        </div>
     </div>
 
-    <div class="controls">
-      <button id="guessBtn">Сделать выбор</button>
-      <button id="nextRoundBtn" disabled>Следующий раунд</button>
-    </div>
-
-    <div class="info">
-      <p id="roundInfo">Раунд 1 из 5</p>
-      <p id="result"></p>
-    </div>
-  </main>
-
-  <script src="coords.json"></script>
-  <script src="script.js"></script>
-  <script src="multiplayer.js"></script>
+    <script src="script.js"></script>
+    <script src="multiplayer.js"></script>
 </body>
 </html>
