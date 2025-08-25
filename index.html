@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BelarusGuessor PRO</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://api-maps.yandex.ru/2.1/?apikey=YOUR_API_KEY&lang=ru_RU"></script>
+</head>
+<body>
+  <header>
+    <h1>BelarusGuessor PRO</h1>
+    <p>Угадай место по панораме Беларуси 🇧🇾</p>
+  </header>
+
+  <main>
+    <div class="game-container">
+      <div id="panorama"></div>
+      <div id="map"></div>
+    </div>
+
+    <div class="controls">
+      <button id="guessBtn">Сделать выбор</button>
+      <button id="nextRoundBtn" disabled>Следующий раунд</button>
+    </div>
+
+    <div class="info">
+      <p id="roundInfo">Раунд 1 из 5</p>
+      <p id="result"></p>
+    </div>
+  </main>
+
+  <footer>
+    <p>© 2025 BelarusGuessor PRO | Сделано с ❤️</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
