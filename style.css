@@ -1,7 +1,7 @@
 body {
   margin: 0;
   font-family: Arial, sans-serif;
-  background: #f5f5f5;
+  background: #f4f4f4;
   color: #333;
   display: flex;
   flex-direction: column;
@@ -15,19 +15,28 @@ header {
   padding: 15px;
 }
 
-h1 {
-  margin: 5px 0;
-}
+h1 { margin: 5px 0; }
 
-main {
-  flex: 1;
+#menu {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 10px;
+  justify-content: center;
+  gap: 15px;
+  margin: 10px 0;
 }
 
-.game-container {
+#menu button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  background: #00aa00;
+  color: white;
+  font-size: 16px;
+}
+
+#menu button:hover { background: #009000; }
+
+.game-panel {
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -43,19 +52,15 @@ main {
 }
 
 @media (min-width: 768px) {
-  .game-container {
-    flex-direction: row;
-  }
-  #panorama, #map {
-    width: 50%;
-    height: 500px;
-  }
+  .game-panel { flex-direction: row; }
+  #panorama, #map { width: 50%; height: 500px; }
 }
 
 .controls {
   margin: 15px 0;
   display: flex;
   gap: 10px;
+  justify-content: center;
 }
 
 button {
@@ -67,23 +72,8 @@ button {
   transition: 0.3s;
 }
 
-button:hover {
-  background: #0077cc;
-  color: white;
-}
+button:hover { background: #0077cc; color: white; }
+button:disabled { background: #ccc; cursor: not-allowed; }
 
-button:disabled {
-  background: #ccc;
-  cursor: not-allowed;
-}
-
-.info {
-  text-align: center;
-  margin-top: 10px;
-}
-
-footer {
-  background: #eee;
-  text-align: center;
-  padding: 10px;
-}
+.info { text-align: center; margin-top: 10px; }
+footer { background: #eee; text-align: center; padding: 10px; }

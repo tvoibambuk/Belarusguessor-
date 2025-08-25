@@ -13,8 +13,13 @@
     <p>Угадай место по панораме Беларуси 🇧🇾</p>
   </header>
 
-  <main>
-    <div class="game-container">
+  <nav id="menu">
+    <button id="soloBtn">Соло</button>
+    <button id="multiBtn">Мультиплеер</button>
+  </nav>
+
+  <main id="gameContainer">
+    <div class="game-panel">
       <div id="panorama"></div>
       <div id="map"></div>
     </div>
@@ -30,10 +35,8 @@
     </div>
   </main>
 
-  <footer>
-    <p>© 2025 BelarusGuessor PRO | Сделано с ❤️</p>
-  </footer>
-
+  <script src="coords.json"></script>
   <script src="script.js"></script>
+  <script src="multiplayer.js"></script>
 </body>
 </html>
