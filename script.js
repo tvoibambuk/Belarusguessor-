@@ -9,7 +9,13 @@ let gameState = {
     guessMarker: null,
     correctMarker: null,
     gameMap: null,
-    panoramaPlayer: null
+    panoramaPlayer: null,
+    roundTimer: null,
+    roundStartTime: null,
+    isMobileView: false,
+    isFullscreen: false,
+    lineToTarget: null,
+    initialPanoramaDirection: null
 };
 
 let gameCoords = [];
@@ -121,18 +127,30 @@ function resetGameState() {
 function updateGameUI() {
     document.getElementById('current-round').textContent = gameState.currentRound;
     document.getElementById('current-score').textContent = gameState.score.toLocaleString();
+    
+    // Обновление статуса выбора
+    updateGuessStatus();
 }
 
 // Обновление прогресса раундов
 function updateRoundProgress() {
     document.querySelectorAll('.round-dot').forEach((dot, index) => {
         const roundNum = index + 1;
+        const scoreElement = dot.querySelector('.dot-score');
+        
         dot.classList.remove('active', 'completed');
         
         if (roundNum < gameState.currentRound) {
             dot.classList.add('completed');
+            const roundResult = gameState.roundResults[index];
+            if (roundResult) {
+                scoreElement.textContent = roundResult.points.toLocaleString();
+            }
         } else if (roundNum === gameState.currentRound) {
             dot.classList.add('active');
+            scoreElement.textContent = '...';
+        } else {
+            scoreElement.textContent = '0';
         }
     });
 }
@@ -176,8 +194,13 @@ async function loadNewRound() {
 // Загрузка панорамы
 async function loadPanorama(location) {
     return new Promise((resolve, reject) => {
+        showPanoramaLoader(true);
+        
         if (typeof ymaps === 'undefined') {
-            reject(new Error('Яндекс.Карты не загружены'));
+            // Демо-режим с красивыми фото
+            loadDemoPanorama(location);
+            showPanoramaLoader(false);
+            resolve();
             return;
         }
         
@@ -189,24 +212,38 @@ async function loadPanorama(location) {
                         gameState.panoramaPlayer.destroy();
                     }
                     
+                    // Случайное направление обзора
+                    const randomDirection = [Math.random() * 360, -15 + Math.random() * 30];
+                    gameState.initialPanoramaDirection = randomDirection;
+                    
                     // Создание новой панорамы
                     gameState.panoramaPlayer = new ymaps.panorama.Player(
                         'panorama',
                         panoramas[0],
                         {
-                            direction: [Math.random() * 360, -10 + Math.random() * 20],
+                            direction: randomDirection,
                             span: [90, 90],
-                            controls: []
+                            controls: ['zoomControl', 'fullscreenControl']
                         }
                     );
                     
+                    // Обработчики событий панорамы
+                    setupPanoramaEvents();
+                    
+                    showPanoramaLoader(false);
                     resolve();
                 } else {
-                    reject(new Error('Панорама не найдена'));
+                    // Падбэк на демо-режим
+                    loadDemoPanorama(location);
+                    showPanoramaLoader(false);
+                    resolve();
                 }
             },
             function(error) {
-                reject(error);
+                console.warn('Ошибка загрузки панорамы:', error);
+                loadDemoPanorama(location);
+                showPanoramaLoader(false);
+                resolve();
             }
         );
     });
@@ -248,33 +285,80 @@ function placeGuessMarker(coords) {
         gameState.gameMap.geoObjects.remove(gameState.guessMarker);
     }
     
-    // Создание нового маркера
+    // Создание нового маркера с красивой иконкой
     gameState.guessMarker = new ymaps.Placemark(coords, {
-        hintContent: 'Ваш выбор'
+        hintContent: 'Ваш выбор',
+        balloonContent: `
+            <div style="text-align: center; padding: 10px;">
+                <strong>📍 Ваш выбор</strong><br>
+                <small>Координаты: ${coords[0].toFixed(4)}, ${coords[1].toFixed(4)}</small>
+            </div>
+        `
     }, {
-        preset: 'islands#redDotIcon',
-        draggable: false
+        preset: 'islands#redIcon',
+        iconColor: '#ff4757',
+        draggable: true
+    });
+    
+    // Обработчик перетаскивания
+    gameState.guessMarker.events.add('dragend', function() {
+        const newCoords = gameState.guessMarker.geometry.getCoordinates();
+        updateGuessStatus();
+        showLiveDistance(newCoords);
     });
     
     gameState.gameMap.geoObjects.add(gameState.guessMarker);
     
-    // Включение кнопки выбора
+    // Обновление интерфейса
+    updateGuessStatus();
+    showLiveDistance(coords);
+    
+    // Включение кнопок
     document.getElementById('make-guess-btn').disabled = false;
     document.getElementById('mobile-guess-btn').disabled = false;
+    document.getElementById('clear-guess-btn').style.display = 'block';
+    document.getElementById('mobile-clear-btn').style.display = 'flex';
 }
 
 // Обновление подсказки о локации
 function updateLocationHint() {
     const hints = [
-        '🇧🇾 Где это в Беларуси?',
-        '🏛️ Найдите это место на карте',
-        '🗺️ Сделайте свой выбор',
-        '📍 Укажите локацию',
-        '🎯 Покажите, где это находится'
+        {
+            icon: '🇧🇾',
+            text: 'Где это в Беларуси?'
+        },
+        {
+            icon: '🏛️',
+            text: 'Найдите это место на карте'
+        },
+        {
+            icon: '🗺️',
+            text: 'Сделайте свой выбор'
+        },
+        {
+            icon: '📍',
+            text: 'Укажите локацию'
+        },
+        {
+            icon: '🎯',
+            text: 'Покажите, где это находится'
+        }
     ];
     
     const randomHint = hints[Math.floor(Math.random() * hints.length)];
-    document.getElementById('location-hint').textContent = randomHint;
+    const hintElement = document.getElementById('location-hint');
+    const iconElement = hintElement ? hintElement.querySelector('.hint-icon') : null;
+    const textElement = hintElement ? hintElement.querySelector('.hint-text') : null;
+    
+    if (iconElement && textElement) {
+        iconElement.textContent = randomHint.icon;
+        textElement.textContent = randomHint.text;
+    } else {
+        // Fallback для старого формата
+        if (hintElement) {
+            hintElement.textContent = randomHint.icon + ' ' + randomHint.text;
+        }
+    }
 }
 
 // Сделать выбор
@@ -314,34 +398,61 @@ function makeGuess() {
 
 // Показ правильной локации на карте
 function showCorrectLocation(coords) {
+    // Красивый маркер правильного места
     gameState.correctMarker = new ymaps.Placemark(coords, {
-        hintContent: 'Правильное место'
+        hintContent: 'Правильное место',
+        balloonContent: `
+            <div style="text-align: center; padding: 15px;">
+                <strong>✅ Правильное место</strong><br>
+                <h4 style="margin: 10px 0; color: #2d8659;">${gameState.currentLocation.name}</h4>
+                <small style="color: #666;">${gameState.currentLocation.region}</small><br>
+                <small style="color: #888;">Координаты: ${coords[0].toFixed(4)}, ${coords[1].toFixed(4)}</small>
+            </div>
+        `
     }, {
-        preset: 'islands#greenDotIcon',
+        preset: 'islands#greenIcon',
+        iconColor: '#2ed573',
         draggable: false
     });
     
     gameState.gameMap.geoObjects.add(gameState.correctMarker);
     
-    // Показ линии между выбором и правильным местом
+    // Красивая линия между выбором и правильным местом
     if (gameState.guessMarker) {
-        const line = new ymaps.Polyline([
-            gameState.guessMarker.geometry.getCoordinates(),
+        const guessCoords = gameState.guessMarker.geometry.getCoordinates();
+        const distance = calculateDistance(guessCoords, coords);
+        
+        // Цвет линии в зависимости от расстояния
+        let lineColor = '#ff4757'; // Красный по умолчанию
+        if (distance < 25) lineColor = '#2ed573'; // Зеленый для хороших результатов
+        else if (distance < 100) lineColor = '#ffa726'; // Оранжевый для средних
+        
+        gameState.lineToTarget = new ymaps.Polyline([
+            guessCoords,
             coords
-        ], {}, {
-            strokeColor: '#FF0000',
-            strokeWidth: 3,
-            strokeOpacity: 0.8
+        ], {
+            hintContent: `Расстояние: ${Math.round(distance)} км`
+        }, {
+            strokeColor: lineColor,
+            strokeWidth: 4,
+            strokeOpacity: 0.8,
+            strokeStyle: 'shortdash'
         });
         
-        gameState.gameMap.geoObjects.add(line);
+        gameState.gameMap.geoObjects.add(gameState.lineToTarget);
+        
+        // Анимация появления линии
+        animateLineAppearance();
     }
     
-    // Подгонка масштаба карты
-    gameState.gameMap.setBounds(gameState.gameMap.geoObjects.getBounds(), {
-        checkZoomRange: true,
-        zoomMargin: 50
-    });
+    // Плавный переход к обзору всех маркеров
+    setTimeout(() => {
+        gameState.gameMap.setBounds(gameState.gameMap.geoObjects.getBounds(), {
+            checkZoomRange: true,
+            zoomMargin: [20, 20, 20, 20],
+            duration: 1000
+        });
+    }, 300);
 }
 
 // Вычисление расстояния между точками (в км)
@@ -538,7 +649,238 @@ function showSettings() {
     alert('Настройки будут добавлены в будущих обновлениях!');
 }
 
+// Новые функции для улучшенного интерфейса
+
+// Обновление статуса выбора
+function updateGuessStatus() {
+    const statusElement = document.getElementById('guess-status');
+    const statusText = statusElement ? statusElement.querySelector('.status-text') : null;
+    
+    if (statusText) {
+        if (gameState.guessMarker) {
+            statusText.textContent = 'Маркер размещен ✓';
+            statusElement.style.background = 'rgba(46, 213, 115, 0.2)';
+            statusElement.style.borderColor = 'rgba(46, 213, 115, 0.5)';
+        } else {
+            statusText.textContent = 'Нажмите на карту';
+            statusElement.style.background = 'rgba(255,255,255,0.1)';
+            statusElement.style.borderColor = 'rgba(255,255,255,0.2)';
+        }
+    }
+}
+
+// Лоадер панорамы
+function showPanoramaLoader(show) {
+    const loader = document.getElementById('panorama-loader');
+    if (loader) {
+        loader.style.display = show ? 'block' : 'none';
+    }
+}
+
+// Демо-панорама
+function loadDemoPanorama(location) {
+    const panoramaDiv = document.getElementById('panorama');
+    
+    // Красивые градиенты для разных мест
+    const gradients = [
+        'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+        'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+        'linear-gradient(135deg, #43e97b 0%, #38d9a9 100%)',
+        'linear-gradient(135deg, #fa709a 0%, #fee140 100%)'
+    ];
+    
+    const randomGradient = gradients[Math.floor(Math.random() * gradients.length)];
+    
+    panoramaDiv.innerHTML = `
+        <div style="
+            width: 100%; 
+            height: 100%; 
+            background: ${randomGradient};
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: 600;
+            flex-direction: column;
+            padding: 2rem;
+        ">
+            <div style="font-size: 4rem; margin-bottom: 1rem; animation: bounce 2s infinite;">🏢</div>
+            <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">Панорамный вид</div>
+            <div style="font-size: 1.1rem; opacity: 0.9; margin-bottom: 1rem;">${location.name}</div>
+            <div style="font-size: 0.9rem; opacity: 0.7; text-align: center; line-height: 1.4;">
+                Для настоящих панорам Yandex Maps<br>
+                добавьте API ключ в index.html
+            </div>
+        </div>
+    `;
+    
+    console.log('Panorama loaded for location:', location.name.split(',')[0]);
+}
+
+// Настройка событий панорамы
+function setupPanoramaEvents() {
+    if (!gameState.panoramaPlayer) return;
+    
+    // Обработчик изменения направления
+    gameState.panoramaPlayer.events.add('directionchange', function() {
+        // Можно добавить логику отслеживания поворотов
+    });
+}
+
+// Полноэкранный режим панорамы
+function toggleFullscreen() {
+    const panoramaContainer = document.querySelector('.panorama-container');
+    
+    if (!gameState.isFullscreen) {
+        if (panoramaContainer.requestFullscreen) {
+            panoramaContainer.requestFullscreen();
+        } else if (panoramaContainer.webkitRequestFullscreen) {
+            panoramaContainer.webkitRequestFullscreen();
+        } else if (panoramaContainer.mozRequestFullScreen) {
+            panoramaContainer.mozRequestFullScreen();
+        }
+        gameState.isFullscreen = true;
+        const btn = document.getElementById('fullscreen-btn');
+        if (btn && btn.querySelector('.btn-text')) {
+            btn.querySelector('.btn-text').textContent = 'Выйти из полного';
+        }
+    } else {
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+        } else if (document.mozCancelFullScreen) {
+            document.mozCancelFullScreen();
+        }
+        gameState.isFullscreen = false;
+        const btn = document.getElementById('fullscreen-btn');
+        if (btn && btn.querySelector('.btn-text')) {
+            btn.querySelector('.btn-text').textContent = 'Полный экран';
+        }
+    }
+}
+
+// Сброс вида панорамы
+function resetPanoramaView() {
+    if (gameState.panoramaPlayer && gameState.initialPanoramaDirection) {
+        gameState.panoramaPlayer.setDirection(gameState.initialPanoramaDirection);
+        gameState.panoramaPlayer.setSpan([90, 90]);
+    }
+}
+
+// Очистка выбора
+function clearGuess() {
+    if (gameState.guessMarker) {
+        gameState.gameMap.geoObjects.remove(gameState.guessMarker);
+        gameState.guessMarker = null;
+    }
+    
+    // Обновление интерфейса
+    updateGuessStatus();
+    document.getElementById('make-guess-btn').disabled = true;
+    document.getElementById('mobile-guess-btn').disabled = true;
+    const clearBtn = document.getElementById('clear-guess-btn');
+    const mobileClearBtn = document.getElementById('mobile-clear-btn');
+    if (clearBtn) clearBtn.style.display = 'none';
+    if (mobileClearBtn) mobileClearBtn.style.display = 'none';
+    
+    // Скрытие информации о расстоянии
+    const distanceInfo = document.getElementById('distance-info');
+    if (distanceInfo) distanceInfo.style.display = 'none';
+}
+
+// Показ расстояния в реальном времени
+function showLiveDistance(guessCoords) {
+    if (!gameState.currentLocation) return;
+    
+    const actualCoords = [gameState.currentLocation.lat, gameState.currentLocation.lng];
+    const distance = calculateDistance(guessCoords, actualCoords);
+    
+    const distanceInfo = document.getElementById('distance-info');
+    const liveDistance = document.getElementById('live-distance');
+    
+    if (distanceInfo && liveDistance) {
+        liveDistance.textContent = `${Math.round(distance)} км`;
+        distanceInfo.style.display = 'block';
+        
+        // Цветовая индикация точности
+        if (distance < 25) {
+            liveDistance.style.color = '#2ed573';
+        } else if (distance < 100) {
+            liveDistance.style.color = '#ffa726';
+        } else {
+            liveDistance.style.color = '#ff4757';
+        }
+    }
+}
+
+// Мобильное переключение вида
+function toggleMobileView() {
+    const gameContent = document.querySelector('.game-content');
+    const toggleIcon = document.getElementById('toggle-icon');
+    const toggleText = document.getElementById('toggle-text');
+    
+    if (gameContent && toggleIcon && toggleText) {
+        gameState.isMobileView = !gameState.isMobileView;
+        
+        if (gameState.isMobileView) {
+            // Показать только карту
+            gameContent.style.gridTemplateRows = '0fr 1fr';
+            toggleIcon.textContent = '📷';
+            toggleText.textContent = 'Панорама';
+        } else {
+            // Показать оба элемента
+            gameContent.style.gridTemplateRows = '2fr 1fr';
+            toggleIcon.textContent = '🗺️';
+            toggleText.textContent = 'Карта';
+        }
+    }
+}
+
+// Анимация появления линии
+function animateLineAppearance() {
+    if (!gameState.lineToTarget) return;
+    
+    // Простая анимация мигания
+    let opacity = 0;
+    const fadeIn = setInterval(() => {
+        opacity += 0.1;
+        if (gameState.lineToTarget) {
+            gameState.lineToTarget.options.set('strokeOpacity', opacity);
+        }
+        if (opacity >= 0.8) {
+            clearInterval(fadeIn);
+        }
+    }, 50);
+}
+
 // Автосохранение при закрытии страницы
 window.addEventListener('beforeunload', function() {
     cleanupGame();
 });
+
+// Обработчик выхода из полноэкранного режима
+document.addEventListener('fullscreenchange', function() {
+    if (!document.fullscreenElement) {
+        gameState.isFullscreen = false;
+        const fullscreenBtn = document.getElementById('fullscreen-btn');
+        if (fullscreenBtn && fullscreenBtn.querySelector('.btn-text')) {
+            fullscreenBtn.querySelector('.btn-text').textContent = 'Полный экран';
+        }
+    }
+});
+
+// Оптимизация для мобильных устройств
+if (window.innerWidth <= 768) {
+    // Автоматическое переключение на мобильные элементы управления
+    document.addEventListener('DOMContentLoaded', function() {
+        const mobileControls = document.querySelector('.mobile-controls');
+        const roundProgress = document.querySelector('.round-progress');
+        
+        if (mobileControls) mobileControls.style.display = 'flex';
+        if (roundProgress) roundProgress.style.bottom = '100px';
+    });
+}

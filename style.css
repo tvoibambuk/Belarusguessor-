@@ -154,7 +154,7 @@ body {
 
 /* Игровой экран */
 #game-screen {
-    background: #1a1a2e;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
 }
 
 .game-header {
@@ -162,57 +162,92 @@ body {
     top: 0;
     left: 0;
     right: 0;
-    height: 60px;
+    height: 70px;
     background: rgba(26, 26, 46, 0.95);
-    backdrop-filter: blur(10px);
+    backdrop-filter: blur(15px);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0 1rem;
+    padding: 0 1.5rem;
     z-index: 100;
     border-bottom: 2px solid rgba(255,255,255,0.1);
+    box-shadow: 0 2px 20px rgba(0,0,0,0.3);
 }
 
 .game-info {
     display: flex;
     gap: 2rem;
-    font-weight: 600;
+    align-items: center;
 }
 
-.round-info, .score-info {
+.round-info, .score-info, .timer-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(255,255,255,0.1);
+    padding: 0.5rem 1rem;
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.2);
+}
+
+.round-text, .score-icon, .timer-icon {
+    opacity: 0.8;
+    font-size: 0.9rem;
+}
+
+.round-number, .score-value, .timer-value {
     color: #ffd23f;
+    font-weight: bold;
+    font-size: 1.1rem;
 }
 
 .menu-toggle {
-    background: rgba(255,255,255,0.1);
+    background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
     border: none;
     color: white;
-    padding: 0.5rem 1rem;
-    border-radius: 8px;
+    padding: 0.75rem 1.25rem;
+    border-radius: 12px;
     cursor: pointer;
     transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
 }
 
 .menu-toggle:hover {
-    background: rgba(255,255,255,0.2);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+}
+
+.menu-icon {
+    font-size: 1.2rem;
+}
+
+.menu-text {
+    font-size: 0.9rem;
 }
 
 .game-content {
     display: grid;
-    grid-template-columns: 1fr 400px;
+    grid-template-columns: 1fr 450px;
     height: 100vh;
-    padding-top: 60px;
+    padding-top: 70px;
+    gap: 2px;
 }
 
 /* Панорама */
 .panorama-container {
     position: relative;
-    background: #000;
+    background: linear-gradient(135deg, #000000 0%, #1a1a2e 100%);
+    overflow: hidden;
 }
 
 .panorama {
     width: 100%;
     height: 100%;
+    border-radius: 0;
 }
 
 .panorama-overlay {
@@ -220,29 +255,105 @@ body {
     top: 0;
     left: 0;
     right: 0;
+    bottom: 0;
     z-index: 10;
     pointer-events: none;
 }
 
 .location-hint {
-    background: rgba(0,0,0,0.7);
+    background: linear-gradient(90deg, rgba(0,0,0,0.8) 0%, rgba(26,26,46,0.9) 100%);
     color: white;
-    padding: 1rem;
+    padding: 1.25rem 2rem;
     text-align: center;
-    font-size: 1.2rem;
+    font-size: 1.3rem;
     font-weight: 600;
+    backdrop-filter: blur(10px);
+    border-bottom: 2px solid rgba(255,215,63,0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+}
+
+.hint-icon {
+    font-size: 1.5rem;
+    animation: pulse 2s infinite;
+}
+
+.hint-text {
+    background: linear-gradient(45deg, #ffd23f, #ff6b35);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.panorama-controls {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    display: flex;
+    gap: 10px;
+    pointer-events: auto;
+}
+
+.panorama-btn {
+    background: rgba(0,0,0,0.7);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    backdrop-filter: blur(10px);
+}
+
+.panorama-btn:hover {
+    background: rgba(255,255,255,0.1);
+    transform: translateY(-2px);
+}
+
+.panorama-loader {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    color: white;
+    z-index: 20;
+    display: none;
+}
+
+.loader-spinner {
+    width: 60px;
+    height: 60px;
+    border: 4px solid rgba(255,255,255,0.3);
+    border-top: 4px solid #4facfe;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 1rem;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
 }
 
 /* Карта */
 .map-container {
     position: relative;
-    background: #2a2a4a;
-    border-left: 2px solid rgba(255,255,255,0.1);
+    background: linear-gradient(135deg, #2a2a4a 0%, #1e3c72 100%);
+    border-left: 3px solid rgba(255,215,63,0.3);
+    box-shadow: -5px 0 20px rgba(0,0,0,0.2);
 }
 
 .guess-map {
     width: 100%;
-    height: calc(100% - 120px);
+    height: calc(100% - 160px);
+    border-radius: 0;
 }
 
 .map-overlay {
@@ -250,32 +361,110 @@ body {
     bottom: 0;
     left: 0;
     right: 0;
-    background: rgba(26, 26, 46, 0.95);
-    padding: 1rem;
-    border-top: 2px solid rgba(255,255,255,0.1);
+    background: linear-gradient(180deg, rgba(26, 26, 46, 0.95) 0%, rgba(30, 60, 114, 0.98) 100%);
+    padding: 1.5rem;
+    border-top: 3px solid rgba(255,215,63,0.3);
+    backdrop-filter: blur(15px);
+}
+
+.map-header {
+    margin-bottom: 1.5rem;
 }
 
 .map-title {
     text-align: center;
-    margin-bottom: 1rem;
     font-weight: 600;
     color: #ffd23f;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+    font-size: 1.1rem;
+}
+
+.map-icon {
+    font-size: 1.3rem;
+    animation: bounce 2s infinite;
+}
+
+.guess-status {
+    text-align: center;
+    font-size: 0.9rem;
+    opacity: 0.8;
+    background: rgba(255,255,255,0.1);
+    padding: 0.5rem;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.2);
 }
 
 .map-controls {
     display: flex;
-    gap: 0.5rem;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.map-info {
+    text-align: center;
+}
+
+.distance-info {
+    background: rgba(255,215,63,0.1);
+    padding: 0.75rem;
+    border-radius: 8px;
+    border: 1px solid rgba(255,215,63,0.3);
+}
+
+.info-label {
+    display: block;
+    font-size: 0.8rem;
+    opacity: 0.8;
+    margin-bottom: 0.25rem;
+}
+
+.info-value {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #ffd23f;
+}
+
+@keyframes bounce {
+    0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+    40% { transform: translateY(-10px); }
+    60% { transform: translateY(-5px); }
 }
 
 .action-btn {
     flex: 1;
-    padding: 0.75rem;
+    padding: 1rem 1.5rem;
     border: none;
-    border-radius: 8px;
+    border-radius: 12px;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
-    font-size: 0.9rem;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    position: relative;
+    overflow: hidden;
+}
+
+.action-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s;
+}
+
+.action-btn:hover::before {
+    left: 100%;
 }
 
 .action-btn.primary {
@@ -284,6 +473,11 @@ body {
 }
 
 .action-btn.secondary {
+    background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.action-btn.tertiary {
     background: rgba(255,255,255,0.1);
     color: white;
     border: 1px solid rgba(255,255,255,0.2);
@@ -292,11 +486,24 @@ body {
 .action-btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+    transform: none;
+}
+
+.action-btn:disabled::before {
+    display: none;
 }
 
 .action-btn:not(:disabled):hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+}
+
+.btn-icon {
+    font-size: 1.1rem;
+}
+
+.btn-text {
+    font-weight: 600;
 }
 
 /* Мобильные элементы управления */
@@ -307,21 +514,51 @@ body {
     left: 50%;
     transform: translateX(-50%);
     z-index: 50;
+    gap: 10px;
 }
 
 .mobile-btn {
-    padding: 1rem 2rem;
+    padding: 1rem 1.5rem;
     border: none;
     border-radius: 12px;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
     box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.2);
 }
 
 .mobile-btn.primary {
     background: linear-gradient(45deg, #4facfe 0%, #00f2fe 100%);
     color: white;
+}
+
+.mobile-btn.secondary {
+    background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.mobile-btn.toggle {
+    background: rgba(255,255,255,0.1);
+    color: white;
+}
+
+.mobile-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+}
+
+.mobile-btn-icon {
+    font-size: 1.1rem;
+}
+
+.mobile-btn-text {
+    font-size: 0.9rem;
+    font-weight: 600;
 }
 
 /* Прогресс раундов */
@@ -330,28 +567,78 @@ body {
     bottom: 20px;
     right: 20px;
     z-index: 50;
+    background: rgba(26, 26, 46, 0.9);
+    padding: 1rem;
+    border-radius: 12px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.2);
+    min-width: 200px;
+}
+
+.progress-header {
+    text-align: center;
+    margin-bottom: 0.75rem;
+}
+
+.progress-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #ffd23f;
+    opacity: 0.9;
 }
 
 .round-dots {
     display: flex;
     gap: 8px;
+    justify-content: center;
 }
 
 .round-dot {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.3);
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.1);
     transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255,255,255,0.2);
+    position: relative;
+}
+
+.dot-number {
+    font-size: 0.8rem;
+    font-weight: bold;
+    color: white;
+    line-height: 1;
+}
+
+.dot-score {
+    font-size: 0.6rem;
+    color: #ffd23f;
+    opacity: 0.8;
+    line-height: 1;
 }
 
 .round-dot.active {
-    background: #4facfe;
-    transform: scale(1.2);
+    background: linear-gradient(45deg, #4facfe 0%, #00f2fe 100%);
+    transform: scale(1.1);
+    box-shadow: 0 4px 15px rgba(79, 172, 254, 0.4);
 }
 
 .round-dot.completed {
-    background: #43e97b;
+    background: linear-gradient(45deg, #43e97b 0%, #38d9a9 100%);
+    box-shadow: 0 4px 15px rgba(67, 233, 123, 0.4);
+}
+
+.round-dot.completed .dot-number {
+    color: white;
+}
+
+.round-dot.completed .dot-score {
+    color: white;
+    opacity: 1;
 }
 
 /* Модальные окна */
@@ -487,11 +774,12 @@ body {
     .game-content {
         grid-template-columns: 1fr;
         grid-template-rows: 2fr 1fr;
+        padding-top: 70px;
     }
     
     .map-container {
         border-left: none;
-        border-top: 2px solid rgba(255,255,255,0.1);
+        border-top: 3px solid rgba(255,215,63,0.3);
     }
     
     .map-controls {
@@ -499,25 +787,90 @@ body {
     }
     
     .mobile-controls {
-        display: block;
+        display: flex;
+        gap: 10px;
     }
     
     .round-progress {
-        bottom: 80px;
+        bottom: 100px;
+        right: 10px;
+        min-width: 180px;
+        padding: 0.75rem;
+    }
+    
+    .round-dots {
+        gap: 6px;
+    }
+    
+    .round-dot {
+        width: 28px;
+        height: 28px;
     }
     
     .modal-content {
         padding: 1.5rem;
         margin: 1rem;
+        max-width: 95%;
     }
     
     .result-actions, .final-actions {
         flex-direction: column;
+        gap: 1rem;
     }
     
     .game-info {
         gap: 1rem;
-        font-size: 0.9rem;
+        font-size: 0.85rem;
+        flex-wrap: wrap;
+    }
+    
+    .round-info, .score-info, .timer-info {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.8rem;
+    }
+    
+    .menu-toggle {
+        padding: 0.5rem 1rem;
+        font-size: 0.8rem;
+    }
+    
+    .menu-text {
+        display: none;
+    }
+    
+    .panorama-controls {
+        bottom: 10px;
+        right: 10px;
+        gap: 5px;
+    }
+    
+    .panorama-btn {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.8rem;
+    }
+    
+    .panorama-btn .btn-text {
+        display: none;
+    }
+    
+    .location-hint {
+        padding: 1rem;
+        font-size: 1.1rem;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .map-overlay {
+        padding: 1rem;
+    }
+    
+    .map-title {
+        font-size: 1rem;
+    }
+    
+    .guess-status {
+        font-size: 0.85rem;
+        padding: 0.4rem;
     }
 }
 
@@ -536,17 +889,91 @@ body {
     }
     
     .game-header {
-        height: 50px;
-        padding: 0 0.5rem;
+        height: 60px;
+        padding: 0 0.75rem;
     }
     
     .game-content {
-        padding-top: 50px;
+        padding-top: 60px;
     }
     
     .location-hint {
         font-size: 1rem;
         padding: 0.75rem;
+    }
+    
+    .game-info {
+        gap: 0.5rem;
+    }
+    
+    .round-info, .score-info {
+        font-size: 0.75rem;
+        padding: 0.3rem 0.6rem;
+    }
+    
+    .timer-info {
+        display: none !important;
+    }
+    
+    .mobile-controls {
+        flex-direction: column;
+        gap: 8px;
+        bottom: 10px;
+    }
+    
+    .mobile-btn {
+        padding: 0.75rem 1rem;
+        font-size: 0.9rem;
+    }
+    
+    .round-progress {
+        bottom: 150px;
+        right: 5px;
+        min-width: 160px;
+        padding: 0.5rem;
+    }
+    
+    .progress-title {
+        font-size: 0.8rem;
+    }
+    
+    .round-dot {
+        width: 24px;
+        height: 24px;
+    }
+    
+    .dot-number {
+        font-size: 0.7rem;
+    }
+    
+    .dot-score {
+        font-size: 0.55rem;
+    }
+    
+    .panorama-controls {
+        display: none;
+    }
+    
+    .location-hint {
+        padding: 0.5rem;
+        font-size: 0.9rem;
+    }
+    
+    .hint-text {
+        text-align: center;
+    }
+    
+    .map-overlay {
+        padding: 0.75rem;
+    }
+    
+    .map-header {
+        margin-bottom: 1rem;
+    }
+    
+    .distance-info {
+        padding: 0.5rem;
+        font-size: 0.85rem;
     }
 }
 
@@ -587,4 +1014,102 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
     background: rgba(255,255,255,0.5);
+}
+
+/* Дополнительные стили для мобильных */
+
+/* Предотвращение масштабирования при повороте */
+@media screen and (orientation: landscape) and (max-width: 768px) {
+    .game-header {
+        height: 50px;
+    }
+    
+    .game-content {
+        padding-top: 50px;
+        grid-template-columns: 1.5fr 1fr;
+        grid-template-rows: 1fr;
+    }
+    
+    .map-container {
+        border-left: 3px solid rgba(255,215,63,0.3);
+        border-top: none;
+    }
+    
+    .mobile-controls {
+        flex-direction: row;
+        bottom: 10px;
+    }
+    
+    .round-progress {
+        bottom: 10px;
+        right: 10px;
+    }
+    
+    .location-hint {
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+    }
+}
+
+/* Оптимизация для высоких DPI экранов */
+@media (min-resolution: 2dppx) {
+    .action-btn,
+    .mobile-btn,
+    .menu-btn {
+        border: 0.5px solid rgba(255,255,255,0.1);
+    }
+}
+
+/* Плавные переходы для лучшего UX */
+.game-content,
+.panorama-container,
+.map-container {
+    transition: all 0.3s ease;
+}
+
+/* Улучшенные тени */
+.round-progress,
+.mobile-controls,
+.panorama-controls {
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
+}
+
+/* Анимация появления элементов */
+.round-dot {
+    animation: fadeInScale 0.3s ease forwards;
+}
+
+@keyframes fadeInScale {
+    from {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Оптимизация производительности */
+.panorama,
+.guess-map {
+    will-change: transform;
+    transform: translateZ(0);
+}
+
+/* Улучшенная доступность */
+.action-btn:focus,
+.mobile-btn:focus,
+.menu-btn:focus {
+    outline: 2px solid #4facfe;
+    outline-offset: 2px;
+}
+
+/* Поддержка reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
 }

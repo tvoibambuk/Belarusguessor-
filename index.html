@@ -65,10 +65,23 @@
             <!-- Заголовок игры -->
             <div class="game-header">
                 <div class="game-info">
-                    <span class="round-info">Раунд <span id="current-round">1</span>/5</span>
-                    <span class="score-info">Очки: <span id="current-score">0</span></span>
+                    <div class="round-info">
+                        <span class="round-text">Раунд</span>
+                        <span class="round-number"><span id="current-round">1</span>/5</span>
+                    </div>
+                    <div class="score-info">
+                        <span class="score-icon">🏆</span>
+                        <span class="score-value" id="current-score">0</span>
+                    </div>
+                    <div class="timer-info" id="round-timer" style="display: none;">
+                        <span class="timer-icon">⏱️</span>
+                        <span class="timer-value" id="timer-value">2:00</span>
+                    </div>
                 </div>
-                <button class="menu-toggle" onclick="showMainMenu()">☰ Меню</button>
+                <button class="menu-toggle" onclick="showMainMenu()">
+                    <span class="menu-icon">☰</span>
+                    <span class="menu-text">Меню</span>
+                </button>
             </div>
 
             <!-- Основной игровой контент -->
@@ -77,7 +90,24 @@
                 <div class="panorama-container">
                     <div id="panorama" class="panorama"></div>
                     <div class="panorama-overlay">
-                        <div class="location-hint" id="location-hint">🇧🇾 Где это в Беларуси?</div>
+                        <div class="location-hint" id="location-hint">
+                            <span class="hint-icon">🇧🇾</span>
+                            <span class="hint-text">Где это в Беларуси?</span>
+                        </div>
+                        <div class="panorama-controls">
+                            <button class="panorama-btn" id="fullscreen-btn" onclick="toggleFullscreen()">
+                                <span class="btn-icon">⛶</span>
+                                <span class="btn-text">Полный экран</span>
+                            </button>
+                            <button class="panorama-btn" id="reset-view-btn" onclick="resetPanoramaView()">
+                                <span class="btn-icon">🔄</span>
+                                <span class="btn-text">Сбросить вид</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="panorama-loader" id="panorama-loader">
+                        <div class="loader-spinner"></div>
+                        <p>Загрузка панорамы...</p>
                     </div>
                 </div>
 
@@ -85,14 +115,34 @@
                 <div class="map-container">
                     <div id="guess-map" class="guess-map"></div>
                     <div class="map-overlay">
-                        <div class="map-title">Выберите локацию на карте</div>
+                        <div class="map-header">
+                            <div class="map-title">
+                                <span class="map-icon">🗺️</span>
+                                <span class="map-text">Выберите локацию</span>
+                            </div>
+                            <div class="guess-status" id="guess-status">
+                                <span class="status-text">Нажмите на карту</span>
+                            </div>
+                        </div>
                         <div class="map-controls">
                             <button id="make-guess-btn" class="action-btn primary" disabled onclick="makeGuess()">
-                                📍 Сделать выбор
+                                <span class="btn-icon">📍</span>
+                                <span class="btn-text">Сделать выбор</span>
                             </button>
-                            <button id="skip-round-btn" class="action-btn secondary" onclick="skipRound()">
-                                ⏭️ Пропустить
+                            <button id="clear-guess-btn" class="action-btn secondary" onclick="clearGuess()" style="display: none;">
+                                <span class="btn-icon">🗑️</span>
+                                <span class="btn-text">Очистить</span>
                             </button>
+                            <button id="skip-round-btn" class="action-btn tertiary" onclick="skipRound()">
+                                <span class="btn-icon">⏭️</span>
+                                <span class="btn-text">Пропустить</span>
+                            </button>
+                        </div>
+                        <div class="map-info" id="map-info">
+                            <div class="distance-info" id="distance-info" style="display: none;">
+                                <span class="info-label">Расстояние до цели:</span>
+                                <span class="info-value" id="live-distance">0 км</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -101,18 +151,45 @@
             <!-- Мобильные кнопки -->
             <div class="mobile-controls">
                 <button id="mobile-guess-btn" class="mobile-btn primary" disabled onclick="makeGuess()">
-                    📍 Сделать выбор
+                    <span class="mobile-btn-icon">📍</span>
+                    <span class="mobile-btn-text">Сделать выбор</span>
+                </button>
+                <button id="mobile-clear-btn" class="mobile-btn secondary" onclick="clearGuess()" style="display: none;">
+                    <span class="mobile-btn-icon">🗑️</span>
+                    <span class="mobile-btn-text">Очистить</span>
+                </button>
+                <button id="mobile-toggle-btn" class="mobile-btn toggle" onclick="toggleMobileView()">
+                    <span class="mobile-btn-icon" id="toggle-icon">🗺️</span>
+                    <span class="mobile-btn-text" id="toggle-text">Карта</span>
                 </button>
             </div>
 
             <!-- Прогресс раундов -->
             <div class="round-progress">
+                <div class="progress-header">
+                    <span class="progress-title">Прогресс</span>
+                </div>
                 <div class="round-dots">
-                    <span class="round-dot active" data-round="1"></span>
-                    <span class="round-dot" data-round="2"></span>
-                    <span class="round-dot" data-round="3"></span>
-                    <span class="round-dot" data-round="4"></span>
-                    <span class="round-dot" data-round="5"></span>
+                    <div class="round-dot active" data-round="1">
+                        <span class="dot-number">1</span>
+                        <span class="dot-score">0</span>
+                    </div>
+                    <div class="round-dot" data-round="2">
+                        <span class="dot-number">2</span>
+                        <span class="dot-score">0</span>
+                    </div>
+                    <div class="round-dot" data-round="3">
+                        <span class="dot-number">3</span>
+                        <span class="dot-score">0</span>
+                    </div>
+                    <div class="round-dot" data-round="4">
+                        <span class="dot-number">4</span>
+                        <span class="dot-score">0</span>
+                    </div>
+                    <div class="round-dot" data-round="5">
+                        <span class="dot-number">5</span>
+                        <span class="dot-score">0</span>
+                    </div>
                 </div>
             </div>
         </div>
